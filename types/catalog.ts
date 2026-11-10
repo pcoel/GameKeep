@@ -28,5 +28,6 @@ export interface LibraryEntry {
   created_at: string;
   updated_at: string;
   game?: Game;
+  user_rating?: number | null;
 }
 

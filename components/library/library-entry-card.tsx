@@ -114,6 +114,17 @@ export function LibraryEntryCard({
           <StatusBadge status={currentStatus} size="sm" />
         </div>
 
+        {/* Badge de Avaliação do Usuário (Feature 003) */}
+        {entry.user_rating !== undefined && entry.user_rating !== null && (
+          <div
+            className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-md border border-primary/50 text-primary font-black text-[11px] flex items-center gap-1 shadow-md"
+            title={`Sua nota média: ${entry.user_rating.toFixed(1)}`}
+          >
+            <span className="text-amber-400">★</span>
+            <span>{entry.user_rating.toFixed(1)}</span>
+          </div>
+        )}
+
         {/* Gradiente */}
         <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent opacity-60 pointer-events-none" />
       </div>
@@ -134,6 +145,21 @@ export function LibraryEntryCard({
               {game?.name || "Jogo"}
             </h4>
           )}
+
+          <div className="mt-1">
+            {entry.user_rating !== undefined && entry.user_rating !== null ? (
+              <span className="text-[11px] text-primary font-bold flex items-center gap-1">
+                <span className="text-amber-400">★</span> Nota pessoal: {entry.user_rating.toFixed(1)}
+              </span>
+            ) : game?.igdb_id ? (
+              <Link
+                href={`/catalog/${game.igdb_id}`}
+                className="text-[10px] text-gray-500 hover:text-primary transition-colors"
+              >
+                + Avaliar este jogo
+              </Link>
+            ) : null}
+          </div>
         </div>
 
         {/* Mensagem de Erro Inline */}

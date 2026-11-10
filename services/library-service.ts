@@ -295,6 +295,21 @@ export async function getUserLibrary(
     };
   }
 
+  // Buscar avaliações do usuário para os jogos de sua biblioteca (Feature 003)
+  const gameIds = (data || []).map((i) => i.game_id);
+  const { data: userReviews } = gameIds.length > 0
+    ? await supabase
+        .from("reviews")
+        .select("game_id, overall_rating")
+        .eq("user_id", user.id)
+        .in("game_id", gameIds)
+    : { data: [] };
+
+  const ratingsMap = new Map<string, number>();
+  (userReviews || []).forEach((r) => {
+    ratingsMap.set(r.game_id, Number(r.overall_rating));
+  });
+
   // Normalização das entradas
   const entries: LibraryEntry[] = (data || []).map((item) => {
     const rawGame = Array.isArray(item.games) ? item.games[0] : item.games;
@@ -306,6 +321,7 @@ export async function getUserLibrary(
       created_at: item.created_at,
       updated_at: item.updated_at,
       game: rawGame as Game | undefined,
+      user_rating: ratingsMap.get(item.game_id) ?? null,
     };
   });
 

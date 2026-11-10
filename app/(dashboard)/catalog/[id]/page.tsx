@@ -1,9 +1,17 @@
 import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { getGameDetails } from "@/services/igdb-service";
 import { getGameLibraryStatus } from "@/services/library-service";
+import {
+  ensureLocalGame,
+  getGameRatingSummary,
+  getGameReviews,
+  getUserReviewForGame,
+} from "@/services/review-service";
 import { AddToLibraryAction } from "@/components/catalog/add-to-library-action";
+import { GameReviewsSection } from "@/components/review/game-reviews-section";
 import { Button } from "@/components/ui/button";
 
 interface GameDetailPageProps {
@@ -54,8 +62,44 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       })
     : null;
 
+  // Garante que o jogo exista na base local e carrega dados de reviews
+  const localGameId = await ensureLocalGame({
+    igdb_id: game.id,
+    name: game.name,
+    slug: game.slug,
+    cover_url: game.cover_url,
+    summary: game.summary,
+    first_release_date: game.first_release_date,
+  });
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [summaryRes, reviewsRes, userReviewRes] = await Promise.all([
+    getGameRatingSummary(localGameId),
+    getGameReviews(localGameId),
+    user ? getUserReviewForGame(localGameId) : Promise.resolve({ success: true, data: null }),
+  ]);
+
+  const summary = summaryRes.success
+    ? summaryRes.data
+    : {
+        total_reviews: 0,
+        overall_average: null,
+        tempo_1_average: null,
+        tempo_2_average: null,
+        tempo_3_average: null,
+        tempo_4_average: null,
+        tempo_5_average: null,
+      };
+
+  const reviews = reviewsRes.success ? reviewsRes.data : [];
+  const userReview = userReviewRes.success ? userReviewRes.data : null;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Navegação de Retorno */}
       <div>
         <Link
@@ -67,7 +111,7 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-        {/* Coluna da Capa */}
+        {/* Coluna da Capa e Ação de Biblioteca */}
         <div className="space-y-6">
           <div className="aspect-[3/4] w-full rounded-2xl overflow-hidden border border-surface-border bg-surface-muted shadow-2xl relative">
             {game.cover_url ? (
@@ -125,7 +169,15 @@ export default async function GameDetailPage({ params }: GameDetailPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Seção Completa de Avaliações & Reviews (Feature 003) */}
+      <GameReviewsSection
+        gameId={localGameId}
+        summary={summary}
+        reviews={reviews}
+        userReview={userReview}
+        currentUserId={user?.id}
+      />
     </div>
   );
 }
-
