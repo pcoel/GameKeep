@@ -79,15 +79,6 @@ export function PrivacySettingsForm({
             />
           </div>
 
-          <div className="bg-surface-muted/40 p-3 rounded-lg border border-surface-border text-xs text-gray-400 space-y-1">
-            <p className="font-semibold text-gray-300">
-              🔒 Princípio de Privacidade por Padrão (Constituição §4.4):
-            </p>
-            <p>
-              Tornar seu perfil público não torna sua biblioteca pública automaticamente. Cada preferência é independente e isolada no banco de dados com Row Level Security.
-            </p>
-          </div>
-
           <Button type="submit" isLoading={isLoading} className="mt-2">
             Salvar Privacidade
           </Button>

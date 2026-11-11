@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ProgressiveRatingDisplay } from "@/components/review/progressive-rating-display";
@@ -52,33 +53,101 @@ export function ReviewCard({
     <div className="rounded-xl border border-surface-border bg-surface p-4 sm:p-5 space-y-4 hover:border-surface-border/90 transition-colors">
       {/* Cabeçalho do Card */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-surface-muted border border-surface-border flex items-center justify-center text-xs font-bold text-primary">
-            {review.author?.avatar_url ? (
-              <img
-                src={review.author.avatar_url}
-                alt={review.author.display_name}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              (review.author?.display_name || "J").charAt(0).toUpperCase()
-            )}
-          </div>
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm text-white">
-                {review.author?.display_name || review.author?.username || "Jogador"}
-              </span>
-              {!review.is_public && (
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                  Privada
-                </span>
+        {/* Identificação do Autor com link para Perfil */}
+        {isOwner ? (
+          <Link href="/profile" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-full bg-surface-muted border border-surface-border flex items-center justify-center text-xs font-bold text-primary overflow-hidden group-hover:border-primary transition-colors">
+              {review.author?.avatar_url ? (
+                <img
+                  src={review.author.avatar_url}
+                  alt="Jogador"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                "J"
               )}
             </div>
-            <p className="text-[11px] text-gray-500">{formattedDate}</p>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
+                  Jogador
+                </span>
+                <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded bg-primary/15 text-primary border border-primary/30">
+                  Você
+                </span>
+                {!review.is_public && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Privada
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500">{formattedDate}</p>
+            </div>
+          </Link>
+        ) : review.author?.username ? (
+          <Link
+            href={`/users/${review.author.username}`}
+            className="flex items-center gap-3 group"
+          >
+            <div className="w-9 h-9 rounded-full bg-surface-muted border border-surface-border flex items-center justify-center text-xs font-bold text-primary overflow-hidden group-hover:border-primary transition-colors">
+              {review.author?.avatar_url ? (
+                <img
+                  src={review.author.avatar_url}
+                  alt={review.author.display_name || review.author.username}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                (review.author.display_name || review.author.username || "J")
+                  .charAt(0)
+                  .toUpperCase()
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white group-hover:text-primary transition-colors">
+                  {review.author.display_name || review.author.username}
+                </span>
+                <span className="text-[11px] text-gray-400 font-normal">
+                  @{review.author.username}
+                </span>
+                {!review.is_public && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Privada
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500">{formattedDate}</p>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-surface-muted border border-surface-border flex items-center justify-center text-xs font-bold text-primary overflow-hidden">
+              {review.author?.avatar_url ? (
+                <img
+                  src={review.author.avatar_url}
+                  alt="Jogador"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                "J"
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-white">Jogador</span>
+                {!review.is_public && (
+                  <span className="px-1.5 py-0.2 text-[10px] font-semibold rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    Privada
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-gray-500">{formattedDate}</p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Ações do Autor */}
         {isOwner && (

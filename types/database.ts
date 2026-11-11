@@ -156,6 +156,27 @@ export interface Database {
         };
         Relationships: [];
       };
+      saved_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          saved_profile_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          saved_profile_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          saved_profile_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

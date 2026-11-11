@@ -49,6 +49,9 @@ export function UserNav({ user }: UserNavProps) {
             <Link href="/catalog" className="hover:text-white transition-colors">
               Catálogo
             </Link>
+            <Link href="/users" className="hover:text-white transition-colors">
+              Jogadores
+            </Link>
             {user && (
               <>
                 <Link href="/library" className="hover:text-white transition-colors">

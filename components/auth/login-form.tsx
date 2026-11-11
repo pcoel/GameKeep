@@ -13,12 +13,18 @@ function LoginFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo") || undefined;
+  const isVerified = searchParams.get("verified") === "true";
+  const authErrorParam = searchParams.get("error");
 
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-  const [generalError, setGeneralError] = useState<string | null>(null);
+  const [generalError, setGeneralError] = useState<string | null>(
+    authErrorParam === "email_verification_failed"
+      ? "Não foi possível confirmar seu e-mail ou o link expirou. Tente novamente."
+      : null
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -79,6 +85,13 @@ function LoginFormContent() {
 
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {isVerified && (
+            <Alert variant="success">
+              <span className="font-semibold block">E-mail confirmado com sucesso!</span>
+              Sua conta está ativada e pronta para uso. Faça login para continuar.
+            </Alert>
+          )}
+
           {generalError && <Alert variant="error">{generalError}</Alert>}
 
           <Input

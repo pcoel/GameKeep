@@ -496,6 +496,13 @@ export async function getUserReviewForGame(
     };
   }
 
+  // Buscar avatar e dados do autor para exibir na review
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
   return {
     success: true,
     data: {
@@ -512,6 +519,14 @@ export async function getUserReviewForGame(
       is_public: data.is_public,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      author: profile
+        ? {
+            id: profile.id,
+            username: profile.username,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          }
+        : undefined,
     },
   };
 }
@@ -552,6 +567,12 @@ export async function getUserReviewByIgdbId(
     return { hasReviewed: false, gameId: game.id };
   }
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, username, display_name, avatar_url")
+    .eq("id", user.id)
+    .maybeSingle();
+
   return {
     hasReviewed: true,
     gameId: game.id,
@@ -569,6 +590,14 @@ export async function getUserReviewByIgdbId(
       is_public: review.is_public,
       created_at: review.created_at,
       updated_at: review.updated_at,
+      author: profile
+        ? {
+            id: profile.id,
+            username: profile.username,
+            display_name: profile.display_name,
+            avatar_url: profile.avatar_url,
+          }
+        : undefined,
     },
   };
 }

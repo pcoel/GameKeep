@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/library/status-badge";
 import { Button } from "@/components/ui/button";
+import { ReviewForm } from "@/components/review/review-form";
 import { updateLibraryGameStatus, removeGameFromLibrary } from "@/services/library-service";
+import { getUserReviewForGame } from "@/services/review-service";
 import type { LibraryEntry, LibraryGameStatus } from "@/types/catalog";
+import type { GameReview } from "@/types/review";
 
 interface LibraryEntryCardProps {
   entry: LibraryEntry;
@@ -31,6 +34,31 @@ export function LibraryEntryCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Estados para edição rápida da avaliação da biblioteca
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isLoadingReview, setIsLoadingReview] = useState(false);
+  const [existingReview, setExistingReview] = useState<GameReview | null>(null);
+
+  const handleOpenReviewEdit = async () => {
+    setIsLoadingReview(true);
+    setErrorMessage(null);
+    try {
+      const res = await getUserReviewForGame(entry.game_id);
+      if (res.success && res.data) {
+        setExistingReview(res.data);
+        setIsReviewModalOpen(true);
+      } else {
+        // Se ainda não tiver review criada mas tiver nota ou desejar criar
+        setExistingReview(null);
+        setIsReviewModalOpen(true);
+      }
+    } catch {
+      setErrorMessage("Erro ao carregar avaliação.");
+    } finally {
+      setIsLoadingReview(false);
+    }
+  };
 
   const game = entry.game;
 
@@ -148,16 +176,28 @@ export function LibraryEntryCard({
 
           <div className="mt-1">
             {entry.user_rating !== undefined && entry.user_rating !== null ? (
-              <span className="text-[11px] text-primary font-bold flex items-center gap-1">
-                <span className="text-amber-400">★</span> Nota pessoal: {entry.user_rating.toFixed(1)}
-              </span>
+              <div className="flex items-center justify-between gap-1 mt-1">
+                <span className="text-[11px] text-primary font-bold flex items-center gap-1">
+                  <span className="text-amber-400">★</span> {entry.user_rating.toFixed(1)}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleOpenReviewEdit}
+                  disabled={isLoadingReview}
+                  className="text-[10px] text-gray-400 hover:text-primary transition-colors underline"
+                >
+                  {isLoadingReview ? "Carregando..." : "Editar avaliação"}
+                </button>
+              </div>
             ) : game?.igdb_id ? (
-              <Link
-                href={`/catalog/${game.igdb_id}`}
-                className="text-[10px] text-gray-500 hover:text-primary transition-colors"
+              <button
+                type="button"
+                onClick={handleOpenReviewEdit}
+                disabled={isLoadingReview}
+                className="text-[10px] text-gray-500 hover:text-primary transition-colors block text-left"
               >
                 + Avaliar este jogo
-              </Link>
+              </button>
             ) : null}
           </div>
         </div>
@@ -187,7 +227,7 @@ export function LibraryEntryCard({
             </select>
           </div>
 
-          {/* Botão de Remover / Modal de Confirmação */}
+          {/* Botão de Remover / Confirmação com aviso de exclusão da avaliação */}
           {!showConfirmDelete ? (
             <button
               type="button"
@@ -197,34 +237,70 @@ export function LibraryEntryCard({
               Remover da biblioteca
             </button>
           ) : (
-            <div className="p-2 rounded bg-surface-muted border border-accent-rose/30 space-y-1.5 animate-fadeIn">
-              <p className="text-[10px] text-rose-300 font-medium text-center">
-                Remover este jogo?
+            <div className="p-2.5 rounded-lg bg-surface-muted border border-accent-rose/40 space-y-2 animate-fadeIn">
+              <p className="text-[10px] text-rose-300 font-semibold leading-tight text-center">
+                Remover da biblioteca?
               </p>
-              <div className="flex items-center gap-1">
+              <p className="text-[9px] text-gray-400 text-center leading-snug">
+                Atenção: a sua avaliação deste jogo também será excluída permanentemente.
+              </p>
+              <div className="flex flex-col gap-1.5 pt-1">
                 <Button
                   size="sm"
                   variant="danger"
-                  className="w-1/2 py-1 text-[10px] h-7"
+                  className="w-full py-1 text-[10px] h-7"
                   onClick={handleRemove}
                   isLoading={isDeleting}
                 >
-                  Sim
+                  Sim, remover jogo e avaliação
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-1/2 py-1 text-[10px] h-7"
+                  className="w-full py-1 text-[10px] h-6"
                   onClick={() => setShowConfirmDelete(false)}
                   disabled={isDeleting}
                 >
-                  Não
+                  Cancelar
                 </Button>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Modal de Avaliação dos 5 Tempos */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-lg bg-surface-card border border-surface-border rounded-2xl p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-surface-border mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  {existingReview ? "Editar Avaliação" : "Avaliar Jogo"}
+                </h3>
+                <p className="text-xs text-gray-400">{game?.name}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(false)}
+                className="text-gray-400 hover:text-white p-1 rounded-md text-sm"
+              >
+                ✕
+              </button>
+            </div>
+
+            <ReviewForm
+              gameId={entry.game_id}
+              initialReview={existingReview}
+              onSuccess={() => {
+                setIsReviewModalOpen(false);
+                router.refresh();
+              }}
+              onCancel={() => setIsReviewModalOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

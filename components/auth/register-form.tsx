@@ -20,6 +20,7 @@ export function RegisterForm() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,11 +62,15 @@ export function RegisterForm() {
           setFieldErrors(res.fieldErrors);
         }
       } else {
-        setSuccessMsg("Conta criada com sucesso! Redirecionando...");
-        setTimeout(() => {
-          router.push("/profile");
-          router.refresh();
-        }, 1200);
+        if (res.data?.requiresEmailConfirmation) {
+          setIsRegistered(true);
+        } else {
+          setSuccessMsg("Conta criada com sucesso! Redirecionando...");
+          setTimeout(() => {
+            router.push("/profile");
+            router.refresh();
+          }, 1200);
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -74,6 +79,43 @@ export function RegisterForm() {
       setIsLoading(false);
     }
   };
+
+  if (isRegistered) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader>
+          <div className="w-12 h-12 mx-auto rounded-full bg-accent-cyan/20 border border-accent-cyan/30 flex items-center justify-center text-accent-cyan text-xl mb-2">
+            ✉️
+          </div>
+          <CardTitle className="text-2xl text-center text-white">
+            Confirme seu E-mail
+          </CardTitle>
+          <CardDescription className="text-center text-gray-300">
+            Sua conta no GameKeep foi pré-cadastrada com sucesso!
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4 text-center">
+          <div className="p-4 rounded-xl bg-surface-muted border border-surface-border text-sm text-gray-300 space-y-2">
+            <p>
+              Enviamos um link de confirmação para o endereço:
+            </p>
+            <p className="font-bold text-white text-base">
+              {formData.email}
+            </p>
+            <p className="text-xs text-gray-400">
+              Acesse sua caixa de entrada e clique no link de ativação para liberar o acesso à sua conta antes de fazer login.
+            </p>
+          </div>
+
+          <Link href="/login" className="block pt-2">
+            <Button className="w-full font-bold">
+              Ir para a Página de Login
+            </Button>
+          </Link>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto">

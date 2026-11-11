@@ -33,7 +33,7 @@ export async function checkUsernameAvailability(username: string): Promise<boole
  */
 export async function signUp(
   rawInput: RegisterInput
-): Promise<ActionResponse<{ user_id: string }>> {
+): Promise<ActionResponse<{ user_id: string; requiresEmailConfirmation?: boolean }>> {
   const parsed = registerSchema.safeParse(rawInput);
   if (!parsed.success) {
     return {
@@ -66,6 +66,7 @@ export async function signUp(
         username,
         display_name: username,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/auth/callback`,
     },
   });
 
@@ -97,12 +98,17 @@ export async function signUp(
     };
   }
 
+  const requiresEmailConfirmation = !data.session;
+
   return {
     success: true,
     data: {
       user_id: data.user?.id || "",
+      requiresEmailConfirmation,
     },
-    message: "Cadastro realizado com sucesso!",
+    message: requiresEmailConfirmation
+      ? "Cadastro realizado! Enviamos um link de confirmação para o seu e-mail."
+      : "Cadastro realizado com sucesso!",
   };
 }
 
@@ -167,5 +173,16 @@ export async function signOut(): Promise<ActionResponse<void>> {
     success: true,
     data: undefined,
   };
+}
+
+/**
+ * Obtém o usuário atualmente autenticado a partir dos cookies de sessão.
+ */
+export async function getCurrentUser() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
 

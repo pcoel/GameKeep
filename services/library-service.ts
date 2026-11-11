@@ -216,6 +216,15 @@ export async function removeGameFromLibrary(
     };
   }
 
+  // 1. Obter game_id para também remover a review associada se existir
+  const { data: existingEntry } = await supabase
+    .from("library_entries")
+    .select("game_id")
+    .eq("id", entry_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  // 2. Excluir a entrada da biblioteca
   const { error } = await supabase
     .from("library_entries")
     .delete()
@@ -230,7 +239,17 @@ export async function removeGameFromLibrary(
     };
   }
 
+  // 3. Excluir avaliação do usuário para este jogo, se houver
+  if (existingEntry?.game_id) {
+    await supabase
+      .from("reviews")
+      .delete()
+      .eq("game_id", existingEntry.game_id)
+      .eq("user_id", user.id);
+  }
+
   revalidatePath("/library");
+  revalidatePath("/profile");
 
   return {
     success: true,
